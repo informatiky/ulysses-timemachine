@@ -7,6 +7,23 @@ import { mkdir, writeFile, readdir, rm, access } from 'fs/promises';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
+// CORS setup using env variable
+const origin = process.env.NEXT_PUBLIC_UPLOAD_BASE_URL || "*";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": origin,
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+// Preflight handler
+export function OPTIONS() {
+  return new Response(null, {
+    status: 204,
+    headers: corsHeaders,
+  });
+}
+
 function shouldIgnorePath(filepath: string): boolean {
   const ignoredDirs = ['Archive', 'Private', '.automation'];
   for (const dir of ignoredDirs) {
@@ -41,14 +58,14 @@ async function getAllFiles(dir: string): Promise<string[]> {
 }
 
 export async function POST(request: NextRequest) {
-    console.log('Request headers:', Object.fromEntries(request.headers.entries()));
-    console.log('Content-Length:', request.headers.get('content-length'));
+  console.log('Request headers:', Object.fromEntries(request.headers.entries()));
+  console.log('Content-Length:', request.headers.get('content-length'));
 
   const tmpBaseDir = path.join(process.cwd(), '.tmp');
   const tmpDir = path.join(tmpBaseDir, `discover-${Date.now()}`);
 
   try {
-    // Ensure .tmp base directory exists with proper permissions
+    // Ensure .tmp base directory exists
     try {
       await access(tmpBaseDir);
     } catch {
@@ -72,7 +89,10 @@ export async function POST(request: NextRequest) {
     console.log(`Received ${files.length} files`);
 
     if (files.length === 0) {
-      return NextResponse.json({ error: 'No files uploaded' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'No files uploaded' },
+        { status: 400, headers: corsHeaders }
+      );
     }
 
     // Write files to temp directory
@@ -108,7 +128,10 @@ export async function POST(request: NextRequest) {
     console.log(`Found ${gitPaths.length} git-related files`);
 
     if (gitPaths.length === 0) {
-      throw new Error('No .git directory found in uploaded files');
+      return NextResponse.json(
+        { error: 'No .git directory found in uploaded files' },
+        { status: 500, headers: corsHeaders }
+      );
     }
 
     const firstGitPath = gitPaths[0];
@@ -117,7 +140,7 @@ export async function POST(request: NextRequest) {
 
     console.log('Git root directory:', rootDir);
 
-    // Get the latest commit
+    // Get latest commit
     const commits = await git.log({
       fs,
       dir: rootDir,
@@ -125,12 +148,12 @@ export async function POST(request: NextRequest) {
     });
 
     if (commits.length === 0) {
-      throw new Error('No commits found in repository');
+      return NextResponse.json(
+        { error: 'No commits found in repository' },
+        { status: 500, headers: corsHeaders }
+      );
     }
 
-    console.log('Found commit:', commits[0].oid);
-
-    // Find all .ulyz files in the latest commit
     const latestCommit = commits[0];
     const ulyzFiles: string[] = [];
 
@@ -156,20 +179,20 @@ export async function POST(request: NextRequest) {
 
     await findUlyzFiles(latestCommit.commit.tree);
 
+    ulyzFiles.sort();
     console.log(`Discovered ${ulyzFiles.length} .ulyz files`);
 
-    // Sort files alphabetically
-    ulyzFiles.sort();
-
-    return NextResponse.json({ files: ulyzFiles });
+    return NextResponse.json(
+      { files: ulyzFiles },
+      { status: 200, headers: corsHeaders }
+    );
   } catch (error) {
     console.error('Error discovering files:', error);
     return NextResponse.json(
       { error: 'Failed to discover files', details: String(error) },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   } finally {
-    // Cleanup
     try {
       await rm(tmpDir, { recursive: true, force: true });
       console.log('Cleaned up temp directory');
