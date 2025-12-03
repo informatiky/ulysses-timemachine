@@ -6,6 +6,10 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '1gb',
     },
   },
+  // Add this for API routes
+  serverRuntimeConfig: {
+    maxBodySize: '1gb',
+  },
 };
 
 export default nextConfig;

@@ -41,6 +41,9 @@ async function getAllFiles(dir: string): Promise<string[]> {
 }
 
 export async function POST(request: NextRequest) {
+    console.log('Request headers:', Object.fromEntries(request.headers.entries()));
+    console.log('Content-Length:', request.headers.get('content-length'));
+
   const tmpBaseDir = path.join(process.cwd(), '.tmp');
   const tmpDir = path.join(tmpBaseDir, `discover-${Date.now()}`);
 
@@ -57,6 +60,7 @@ export async function POST(request: NextRequest) {
     await mkdir(tmpDir, { recursive: true, mode: 0o775 });
 
     const formData = await request.formData();
+    console.log('FormData entries:', formData.entries().next());
     const files: File[] = [];
 
     for (const [, value] of formData.entries()) {
