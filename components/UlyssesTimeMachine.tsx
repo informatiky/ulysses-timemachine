@@ -184,10 +184,13 @@ export default function UlyssesTimeMachine() {
       addLog('info', 'Discovering .ulyz files in repository...');
 
       // First, discover available .ulyz files
-      const discoverResponse = await fetch('/api/discover-files', {
-        method: 'POST',
-        body: formData,
-      });
+      const discoverResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_UPLOAD_BASE_URL || ""}/api/discover-files`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       if (!discoverResponse.ok) {
         throw new Error('Failed to discover files');
