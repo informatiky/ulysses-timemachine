@@ -3,6 +3,13 @@
 import React, { useState } from 'react';
 import { Upload, Clock, ChevronLeft, ChevronRight, FileText, Folder, GitBranch, Loader2, Terminal, X, Download, Save, Share2 } from 'lucide-react';
 
+declare module 'react' {
+  interface InputHTMLAttributes<T> extends HTMLAttributes<T> {
+    webkitdirectory?: string;
+    directory?: string;
+  }
+}
+
 interface FileVersion {
   hash: string;
   date: Date;
