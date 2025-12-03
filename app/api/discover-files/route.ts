@@ -8,7 +8,7 @@ export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 // CORS setup using env variable
-const origin = process.env.NEXT_PUBLIC_BASE_URL= || "*";
+const origin = process.env.NEXT_PUBLIC_BASE_URL || "*";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": origin,
