@@ -9,6 +9,10 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@isomorphic-git/lightning-fs": "^4.6.2",
+    "isomorphic-git": "^1.35.1",
+    "jszip": "^3.10.1",
+    "lucide-react": "^0.555.0",
     "next": "16.0.6",
     "react": "19.2.0",
     "react-dom": "19.2.0"
